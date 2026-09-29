@@ -7,6 +7,7 @@ const CAUGHT_MESSAGE = 'Oops! The dog caught you! Try again.';
 const PATROL_MS = 400;
 const MOVE_THROTTLE_MS = 80;
 const WIN_DELAY_MS = 450;
+const DPAD_REPEAT_MS = 120; // hold a D-pad button to keep moving
 
 /* Legend: # wall | . floor | S start | E exit  (row, col) */
 const MAZE = [
@@ -151,6 +152,10 @@ function mount() {
     ctx.onKey = safely(onKeydown, { title: 'Maze error' });
     document.addEventListener('keydown', ctx.onKey);
 
+    // On-screen D-pad for touch devices (shown via CSS on phones/tablets)
+    ctx.dpad = buildDpad();
+    host.insertAdjacentElement('afterend', ctx.dpad);
+
     // Start the chase loop
     ctx.patrol = setInterval(safely(gameTick, { title: 'Maze error' }), PATROL_MS);
 }
@@ -159,9 +164,46 @@ function unmount() {
     if (!ctx) return;
     document.removeEventListener('keydown', ctx.onKey);
     clearInterval(ctx.patrol);
+    clearInterval(ctx.repeat);
+    ctx.dpad?.remove();
     ctx.timers.forEach(clearTimeout);
     ctx.host.replaceChildren();
     ctx = null;
+}
+
+/* ---------- Touch controls ---------- */
+const DPAD = [
+    { key: 'ArrowUp', label: '▲', cls: 'up', aria: 'Move up' },
+    { key: 'ArrowLeft', label: '◀', cls: 'left', aria: 'Move left' },
+    { key: 'ArrowRight', label: '▶', cls: 'right', aria: 'Move right' },
+    { key: 'ArrowDown', label: '▼', cls: 'down', aria: 'Move down' },
+];
+
+function buildDpad() {
+    const pad = el('div', 'dpad');
+    pad.setAttribute('role', 'group');
+    pad.setAttribute('aria-label', 'Movement controls');
+
+    const stop = () => { if (ctx) { clearInterval(ctx.repeat); ctx.repeat = 0; } };
+
+    DPAD.forEach(({ key, label, cls, aria }) => {
+        const b = el('button', `dpad__btn dpad__btn--${cls}`);
+        b.type = 'button';
+        b.textContent = label;
+        b.setAttribute('aria-label', aria);
+
+        b.addEventListener('pointerdown', e => {
+            e.preventDefault();                       // no focus / text selection / double-tap zoom
+            if (!ctx) return;
+            stop();
+            move(KEY_DIRS[key]);
+            ctx.repeat = setInterval(() => move(KEY_DIRS[key]), DPAD_REPEAT_MS);
+        });
+        ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => b.addEventListener(t, stop));
+        b.addEventListener('contextmenu', e => e.preventDefault());
+        pad.append(b);
+    });
+    return pad;
 }
 
 /* ---------- Gameplay ---------- */
@@ -169,6 +211,12 @@ function onKeydown(e) {
     const dir = KEY_DIRS[e.key];
     if (!dir || !ctx) return;
     e.preventDefault();
+    move(dir);
+}
+
+/* Shared by keyboard and on-screen buttons */
+function move(dir) {
+    if (!ctx) return;
 
     if (!ctx.started) {
         ctx.started = true;
@@ -220,6 +268,7 @@ function gameTick() {
 const dogAt = (r, c) => ctx.dogs.some(d => d.r === r && d.c === c);
 
 function caught() {
+    clearInterval(ctx.repeat);
     ctx.locked = true;
     ctx.started = false;
     ctx.player = { ...ctx.start };
@@ -242,6 +291,7 @@ function caught() {
 }
 
 function win() {
+    clearInterval(ctx.repeat);
     ctx.locked = true;
     ctx.board.classList.add('is-won');
     ctx.timers.push(setTimeout(() => navigateToStage(NEXT_STAGE), WIN_DELAY_MS));
