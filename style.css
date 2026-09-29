@@ -621,7 +621,9 @@ img {
 
 .rps-babar.is-looping,
 .rps-bon.is-looping {
-    animation: rps-hop var(--loop-ms, 1s) ease-in-out both;
+    /* Use the stage-provided --loop-ms (set to 2000ms by JS). Fallback to 2000ms and no delay. */
+    animation: rps-hop var(--loop-ms, 2000ms) ease-in-out both;
+    animation-delay: 0s;
     position: relative;
     z-index: 5;
 }
