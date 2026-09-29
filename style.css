@@ -1,0 +1,1084 @@
+/* ---------- Tokens ---------- */
+:root {
+    --bg: #e6eef8;
+    --surface: #e6eef8;
+    --ink: #2b3952;
+    --ink-soft: #5c6e8a;
+    --accent: #4d73db;
+    --accent-glow: rgba(77, 115, 219, 0.25);
+    --danger: #d95366;
+    --kwek-orange: #ff7614;
+    --radius: 14px;
+    --radius-sm: 8px;
+
+    --font-display: 'Press Start 2P', monospace;
+    --font-body: 'DotGothic16', sans-serif;
+
+    /* Crisp Neumorphic Elevation Arrays */
+    --shadow-extruded: 10px 10px 20px rgba(163, 177, 198, .55), -10px -10px 20px rgba(255, 255, 255, .85);
+    --shadow-extruded-sm: 4px 4px 8px rgba(163, 177, 198, .5), -4px -4px 8px rgba(255, 255, 255, .85);
+    --shadow-hover: 14px 14px 24px rgba(163, 177, 198, .6), -14px -14px 24px rgba(255, 255, 255, 1);
+    --shadow-inset: inset 4px 4px 8px rgba(163, 177, 198, .6), inset -4px -4px 8px rgba(255, 255, 255, .85);
+
+    --ease: cubic-bezier(.175, .885, .32, 1.275);
+    /* Playful elastic bouncy feel */
+    --t-fast: .2s;
+    --t-screen: .4s;
+}
+
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    font-family: var(--font-body);
+    font-size: 1.25rem;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.5;
+    -webkit-font-smoothing: none;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+}
+
+button {
+    font: inherit;
+    color: inherit;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+    image-rendering: pixelated;
+}
+
+:focus-visible {
+    outline: 3px dashed var(--accent);
+    outline-offset: 4px;
+}
+
+/* ---------- Layout ---------- */
+.app-bg {
+    min-height: 100%;
+    /* Soft green gradient to match the cafe scene */
+    background: linear-gradient(135deg, #e0f2e9 0%, #c8e6c9 50%, #a5d6a7 100%);
+    padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
+    display: grid;
+    place-items: center;
+}
+
+.game-root {
+    width: min(100%, 560px);
+    position: relative;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-col-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    text-align: center;
+}
+
+.grid-center {
+    display: grid;
+    place-items: center;
+}
+
+/* ---------- Typography ---------- */
+.title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    line-height: 1.6;
+    letter-spacing: -0.5px;
+    color: var(--ink);
+    text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.8);
+}
+
+.title--sm {
+    font-size: clamp(.8rem, 3.4vw, 1rem);
+}
+
+.subtitle {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    max-width: 32ch;
+}
+
+/* ---------- Neumorphic surfaces ---------- */
+.panel {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: var(--shadow-extruded);
+    width: 100%;
+}
+
+.panel--extruded {
+    box-shadow: var(--shadow-extruded);
+}
+
+.well {
+    width: 100%;
+    min-height: 240px;
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+}
+
+.well--inset {
+    box-shadow: var(--shadow-inset);
+    padding: 20px;
+    background: rgba(163, 177, 198, 0.05);
+    border-radius: var(--radius);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 100%;
+    margin: 8px 0;
+}
+
+.btn {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    padding: 16px 28px;
+    letter-spacing: 0.5px;
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-extruded-sm);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    transition: box-shadow var(--t-fast) var(--ease), transform var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+
+.btn:hover {
+    box-shadow: var(--shadow-hover);
+    color: var(--accent);
+}
+
+.btn:active,
+.btn.is-pressed {
+    box-shadow: var(--shadow-inset);
+    transform: scale(0.98);
+}
+
+.btn--primary {
+    color: var(--accent);
+    border-color: rgba(108, 142, 232, 0.3);
+}
+
+.btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    box-shadow: var(--shadow-inset);
+}
+
+.panel:active {
+    transform: scale(0.98);
+}
+
+.panel--static:active {
+    transform: none;
+}
+
+/* ---------- Babar placeholder ---------- */
+.babar {
+    width: 130px;
+    height: 130px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    box-shadow: var(--shadow-inset);
+    background: var(--surface);
+    font-size: 2.2rem;
+    animation: bob 2s steps(4) infinite;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ---------- Screens & transitions ---------- */
+.screen {
+    animation: screen-in var(--t-screen) var(--ease) both;
+}
+
+.screen--hidden {
+    display: none;
+}
+
+.screen.is-leaving {
+    animation: screen-out .3s var(--ease) both;
+}
+
+@keyframes screen-in {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes screen-out {
+    from {
+        opacity: 1;
+        transform: none;
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-10px) scale(.98);
+    }
+}
+
+@keyframes bob {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+/* ----- Scene frame and dialogue (from level6) ----- */
+.scene-frame {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.scene-frame .scene-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    margin: 0 auto;
+}
+
+.pixel-box {
+    border: 3px solid rgba(0, 0, 0, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(245, 245, 245, 0.95));
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.06);
+}
+
+.dialogue-box {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(240, 248, 245, 0.98));
+    border: 4px solid var(--ink-soft);
+    border-radius: var(--radius-sm);
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+    margin-top: 4px;
+    /* Small gap from maze */
+}
+
+#welcome-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 0;
+    min-height: 3.2em;
+    /* Prevent layout shift */
+}
+
+/* JS-driven typewriter: use inline caret element so cursor stays aligned */
+.typewriter {
+    display: inline-block;
+    white-space: pre-wrap;
+    word-break: break-word;
+    letter-spacing: .02em;
+    overflow-wrap: anywhere;
+    vertical-align: top;
+}
+
+.typewriter .caret {
+    display: inline-block;
+    width: 0;
+    border-right: .12em solid var(--kwek-orange);
+    margin-left: 4px;
+    animation: blink .8s step-end infinite;
+    vertical-align: bottom;
+}
+
+/* @keyframes typing {
+    from {
+        width: 0
+    }
+
+    to {
+        width: 100%
+    }
+} */
+
+@keyframes blink-caret {
+
+    from,
+    to {
+        border-color: transparent
+    }
+
+    50% {
+        border-color: var(--accent)
+    }
+}
+
+@keyframes blink {
+
+    from,
+    to {
+        border-color: transparent;
+    }
+
+    50% {
+        border-color: var(--kwek-orange);
+    }
+}
+
+.mb-3 {
+    margin-bottom: 12px;
+}
+
+
+@keyframes modal-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -46%) scale(.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+/* ---------- Error alert (floating neumorphic modal) ---------- */
+.alert-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(230, 238, 248, .7);
+    backdrop-filter: blur(2px);
+    z-index: 100;
+}
+
+.alert {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 101;
+    width: min(90vw, 400px);
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-extruded);
+    padding: 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    animation: modal-in .3s var(--ease) both;
+}
+
+.alert__icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-inset);
+    color: var(--danger);
+    font-family: var(--font-display);
+}
+
+.alert__title {
+    font-family: var(--font-display);
+    font-size: .8rem;
+}
+
+.alert__msg {
+    color: var(--ink-soft);
+    font-size: .95rem;
+    overflow-wrap: anywhere;
+}
+
+.alert__actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+/* ---------- Stage 1: Maze ---------- */
+
+#maze-text {
+    font-size: 1rem;
+    line-height: 1.4;
+    color: var(--ink);
+    margin: 0;
+    min-height: 2.8em;
+}
+
+.maze {
+    --cell: clamp(18px, calc((100vw - 120px) / 11), 38px);
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--cols), var(--cell));
+    grid-auto-rows: var(--cell);
+    width: max-content;
+    margin: 0 auto;
+    background: #c2d6b4;
+    /* Dirt path color */
+    border: 4px solid #5a7a4a;
+    border-radius: 4px;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+.maze-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    max-width: 600px;
+    width: 100%;
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-extruded);
+    animation: slideUp 0.6s var(--ease) both;
+}
+
+.maze-container {
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #d4e3f5;
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.1);
+    /* Remove min-height to let it fit content, but keep a fallback */
+    min-height: 280px;
+    position: relative;
+}
+
+.maze__tile {
+    width: var(--cell);
+    height: var(--cell);
+    position: relative;
+}
+
+.maze__tile--wall {
+    background-color: #6d9e5b;
+    background-image:
+        linear-gradient(45deg, #5c8a4a 25%, transparent 25%, transparent 75%, #5c8a4a 75%, #5c8a4a),
+        linear-gradient(45deg, #5c8a4a 25%, transparent 25%, transparent 75%, #5c8a4a 75%, #5c8a4a);
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+    border: 1px solid #4a7a3a;
+    box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.2), inset -2px -2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.maze__tile--exit {
+    background: rgba(77, 115, 219, 0.15);
+    border-radius: 6px;
+    box-shadow: var(--shadow-inset);
+    border: 2px dashed var(--accent);
+}
+
+.maze__sprite {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--cell);
+    height: var(--cell);
+    z-index: 10;
+    pointer-events: none;
+    user-select: none;
+    /* position via left/top so transform remains available for bob/pulse animations */
+    left: calc(var(--c) * var(--cell));
+    top: calc(var(--r) * var(--cell));
+    transition: left 0.15s cubic-bezier(0.25, 1, 0.5, 1), top 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: left, top, transform;
+    image-rendering: pixelated;
+}
+
+.maze__sprite--babar {
+    z-index: 15;
+    /* Higher z-index to ensure Babar is on top of the exit tile */
+    animation: bob 2s steps(4) infinite;
+    /* nudge Babar slightly up so he appears 'near' the exit tile instead of centered */
+    top: calc(var(--r) * var(--cell) - 6px);
+}
+
+.maze__sprite--iro {
+    z-index: 16;
+    /* Ensure dogs are above walls */
+    transition-duration: .2s;
+    animation: bob 0.6s steps(2) infinite, pulseDog 1.4s ease-in-out infinite;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18));
+    outline: 2px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 0 rgba(255, 80, 80, 0.0);
+}
+
+@keyframes pulseDog {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 80, 80, 0.0);
+    }
+
+    50% {
+        box-shadow: 0 6px 18px 4px rgba(255, 80, 80, 0.12);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 80, 80, 0.0);
+    }
+}
+
+.maze.is-won .maze__sprite--bon {
+    animation: bob .4s steps(2) infinite;
+}
+
+.maze-hint {
+    margin-top: 12px;
+    font-size: .85rem;
+    color: var(--ink-soft);
+    text-align: center;
+}
+
+/* ---------- Stage 2: Kwek-kwek Challenge ---------- */
+.rps-arena {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 240px;
+    padding: 10px 0;
+}
+
+.rps-actor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.rps-actor.is-panicked {
+    animation: panic-run 1.2s ease-in-out both;
+}
+
+@keyframes panic-run {
+    0% {
+        transform: translateX(0) rotate(0deg);
+    }
+
+    20% {
+        transform: translateX(-8px) rotate(-6deg);
+    }
+
+    40% {
+        transform: translateX(8px) rotate(6deg);
+    }
+
+    60% {
+        transform: translateX(-6px) rotate(-4deg);
+    }
+
+    80% {
+        transform: translateX(6px) rotate(3deg);
+    }
+
+    100% {
+        transform: translateX(0) rotate(0deg);
+    }
+}
+
+.rps-name {
+    font-family: var(--font-display);
+    font-size: .6rem;
+}
+
+.rps-sprite {
+    width: 80px;
+    height: 80px;
+    filter: drop-shadow(4px 4px 0px rgba(163, 177, 198, 0.4));
+}
+
+.rps-babar.is-looping {
+    animation: orbit 5s ease-in-out both;
+    position: relative;
+    z-index: 5;
+}
+
+.rps-bon.is-looping {
+    animation: orbit 5s ease-in-out both;
+    position: relative;
+    z-index: 5;
+}
+
+@keyframes orbit {
+    0% {
+        transform: rotate(0deg) translateX(0) rotate(0deg);
+    }
+
+    10% {
+        transform: rotate(72deg) translateX(46px) rotate(-72deg);
+    }
+
+    90% {
+        transform: rotate(648deg) translateX(46px) rotate(-648deg);
+    }
+
+    100% {
+        transform: rotate(720deg) translateX(0) rotate(-720deg);
+    }
+}
+
+.stick {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0 70px;
+    min-width: 56px;
+}
+
+.stick::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    bottom: 0;
+    width: 8px;
+    background: #c8975b;
+    border-radius: 2px;
+    box-shadow: 2px 2px 4px rgba(163, 177, 198, .7), -1px -1px 3px rgba(255, 255, 255, .8);
+}
+
+.stick__egg {
+    position: relative;
+    z-index: 1;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 30%, #ffc27a, #f08a24 60%, #d96a10);
+    box-shadow: 3px 3px 6px rgba(163, 177, 198, .7), -2px -2px 5px rgba(255, 255, 255, .8);
+    transition: transform .5s var(--ease), opacity .5s var(--ease);
+}
+
+.stick__egg.is-eaten {
+    transform: translateY(-14px) scale(0);
+    opacity: 0;
+}
+
+.rps-reveal {
+    margin-top: 12px;
+    min-height: 1.6em;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.rps-status {
+    min-height: 1.8em;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: .7rem;
+    color: var(--accent);
+}
+
+.rps-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.rps-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: .6rem;
+    min-width: 96px;
+}
+
+.rps-btn__icon {
+    font-size: 1.8rem;
+}
+
+/* ---------- Stage 3: Annoying Yes Button ---------- */
+.question-header {
+    font-family: var(--font-display);
+    font-size: clamp(.85rem, 3.6vw, 1.1rem);
+    line-height: 1.7;
+    text-align: center;
+    margin: 20px 0 32px;
+}
+
+.question-choices {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    align-items: center;
+}
+
+.question-slot {
+    display: inline-block;
+}
+
+.question-note {
+    margin-top: 24px;
+    min-height: 1.6em;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: .7rem;
+    color: var(--accent);
+}
+
+.btn--fleeing,
+.question-yes.is-fleeing {
+    position: fixed;
+    z-index: 50;
+    transition: top .28s var(--ease), left .28s var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+
+.question-yes.is-gone {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s;
+}
+
+/* ---------- Stage 4: Supermarket Last Quest ---------- */
+.lotto-santa {
+    width: 84px;
+    height: 84px;
+    margin: 0 auto 8px;
+}
+
+.lotto-greeting {
+    text-align: center;
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 46ch;
+    margin: 0 auto 20px;
+}
+
+.lotto-ticket {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.scratch-node {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--surface);
+    box-shadow: var(--shadow-inset);
+    transition: opacity .4s, filter .4s, transform var(--t-fast) var(--ease);
+}
+
+.scratch-prize {
+    padding: 0 14px;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: .55rem;
+    line-height: 1.6;
+}
+
+.scratch-canvas {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    touch-action: none;
+    cursor: crosshair;
+    box-shadow: var(--shadow-extruded-sm);
+    transition: opacity .5s var(--ease);
+    box-shadow: var(--shadow-extruded-sm);
+}
+
+.scratch-canvas.is-revealed {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.scratch-node.is-locked {
+    opacity: .4;
+    filter: grayscale(.8);
+    pointer-events: none;
+}
+
+.scratch-node.is-locked .scratch-canvas {
+    box-shadow: none;
+}
+
+.lotto-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin-top: 22px;
+    text-align: center;
+}
+
+.lotto-won {
+    font-family: var(--font-display);
+    font-size: .8rem;
+    line-height: 1.6;
+    color: var(--accent);
+}
+
+.lotto-note {
+    color: var(--ink-soft);
+}
+
+/* ---------- Micro Keyframe Enhancements ---------- */
+@keyframes pulseGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0px transparent;
+    }
+
+    50% {
+        box-shadow: 0 0 12px var(--accent-glow);
+    }
+}
+
+@keyframes bob {
+
+    0%,
+    100% {
+        transform: translateY(0) scaleX(1);
+    }
+
+    50% {
+        transform: translateY(-8px) scaleX(0.96);
+    }
+}
+
+/* ----- Welcome panel improvements ----- */
+.welcome-panel {
+    /* Enlarge the panel */
+    max-width: 640px;
+    width: 100%;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    /* Proper gap between scene and dialogue */
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-extruded);
+    background: var(--surface);
+
+    /* Entrance Animation */
+    animation: slideUp 0.6s var(--ease) both;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.avatar-frame {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 6px 18px rgba(20, 30, 60, 0.12);
+    border: 4px solid rgba(255, 255, 255, 0.95);
+    transition: transform 200ms var(--ease), box-shadow 200ms var(--ease);
+}
+
+.avatar-frame:hover {
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: 0 12px 28px rgba(20, 30, 60, 0.18);
+}
+
+.dialogue-box {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(240, 248, 245, 0.98));
+    border: 4px solid var(--ink-soft);
+    /* Thick pixel-style border */
+    border-radius: var(--radius-sm);
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+    /* Hard shadow for pixel look */
+}
+
+.dialogue-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.dialogue-name {
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.dialogue-inner {
+    display: flex;
+    align-items: center;
+    /* Center align for compact look */
+    gap: 12px;
+}
+
+.dialogue-text .title--sm {
+    margin: 0;
+    flex: 1;
+}
+
+.btn--large {
+    padding: 16px 48px;
+    font-size: 0.85rem;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    box-shadow: 0 4px 0 rgba(77, 115, 219, 0.2);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.btn--large:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 rgba(77, 115, 219, 0.3);
+    background: #f0f4ff;
+}
+
+.btn--large:active,
+.btn--large.is-pressed {
+    transform: translateY(0) scale(0.99);
+}
+
+.scene-frame {
+    height: 100px;
+    /* Smaller for the maze screen to fit */
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+    border-radius: var(--radius-sm);
+    border: 3px solid rgba(0, 0, 0, 0.08);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.scene-frame:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 18px 40px rgba(20, 30, 60, 0.08);
+}
+
+.scene-frame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+    pointer-events: none;
+}
+
+/* ensure typewriter displays nicely on multiple widths */
+.typewriter {
+    overflow: hidden;
+    border-right: .15em solid var(--accent);
+    /* Cursor */
+    white-space: pre-wrap;
+    /* Allows text to wrap */
+    letter-spacing: .02em;
+    animation:
+        typing 3.5s steps(50, end) forwards,
+        blink-caret .75s step-end infinite;
+}
+
+.avatar-wrapper {
+    flex-shrink: 0;
+    width: 50px;
+    /* Smaller avatar for maze screen */
+    height: 50px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background: #e0e0e0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: bob 2s steps(4) infinite;
+}
+
+@media (max-width: 560px) {
+    .maze-panel {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .scene-frame {
+        height: 80px;
+    }
+
+    .avatar-wrapper {
+        width: 40px;
+        height: 40px;
+    }
+
+    #maze-text {
+        font-size: 0.8rem;
+    }
+
+    .maze {
+        --cell: clamp(16px, calc((100vw - 100px) / 11), 30px);
+    }
+}

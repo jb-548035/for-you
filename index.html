@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Babar's Quest for Bon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app-bg" class="app-bg">
+        <main id="game-root" class="game-root">
+
+            <!-- Screen 1: Welcome -->
+            <section id="welcome" class="screen is-active" data-stage="welcome" aria-label="Welcome">
+                <div class="panel panel--extruded welcome-panel">
+                    <!-- Scene frame (uses attached scene image) -->
+                    <div class="scene-frame pixel-box">
+                        <img class="scene-img" src="assets/welcome.jpg" alt="Welcome scene" />
+                    </div>
+
+                    <!-- Dialogue block with avatar and typewriter text -->
+                    <div class="dialogue-box pixel-box">
+                        <div class="dialogue-inner">
+                            <div class="avatar-wrapper">
+                                <img class="avatar-frame" src="assets/babar-wave.png" data-asset alt="Babar" />
+                            </div>
+                            <div class="dialogue-text">
+                                <h3 class="dialogue-name">Babar</h3>
+                                <p id="welcome-text" class="typewriter" aria-live="polite">
+                                    Hi, Bon! Handa ka na ba? I've prepared a few little quests for you today. Let's go!
+                                </p>
+                            </div>
+                        </div>
+                        <div class="dialogue-actions">
+                            <button class="btn btn--primary btn--large" data-goto="maze">Start Quest</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 2: Maze -->
+            <section id="maze" class="screen screen--hidden" data-stage="maze" aria-label="Escape the Maze">
+                <div class="panel panel--extruded maze-panel">
+                    <!-- Scene frame for the maze -->
+                    <div class="scene-frame pixel-box">
+                        <img class="scene-img" src="assets/stage1-banner.jpg" alt="Maze banner" />
+                    </div>
+
+                    <!-- Maze Container -->
+                    <div id="maze-container" class="well well--inset maze-container"></div>
+
+                    <!-- Dialogue block integrated into the panel -->
+                    <div class="dialogue-box pixel-box">
+                        <div class="dialogue-inner">
+                            <div class="avatar-wrapper">
+                                <img class="avatar-frame" src="assets/babar-wave.png" data-asset alt="Babar" />
+                            </div>
+                            <div class="dialogue-text">
+                                <h3 class="dialogue-name">Babar</h3>
+                                <p id="maze-text" class="typewriter" aria-live="polite">
+                                    Run, Bon! The dog is chasing you — use arrow keys to move to the exit.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Screen 3: Rock, Paper, Scissors - add scene frame + instruction -->
+            <section id="rps" class="screen screen--hidden" data-stage="rps" aria-label="Kwek-kwek Challenge">
+                <div class="panel panel--extruded flex-col-center">
+                    <div class="scene-frame pixel-box">
+                        <img class="scene-img" src="assets/stage2-banner.jpg" alt="RPS banner" />
+                    </div>
+                    <h2 class="title title--sm">Bato Bato Kwek</h2>
+                    <div class="dialogue-box pixel-box" style="width:100%;">
+                        <div class="dialogue-inner">
+                            <div class="avatar-wrapper">
+                                <img class="avatar-frame" src="assets/babar-cheer.png" data-asset alt="Babar" />
+                            </div>
+                            <div class="dialogue-text">
+                                <h3 class="dialogue-name">Babar</h3>
+                                <p class="typewriter">Choose rock, paper, or scissors. Beat the opponent to proceed.</p>
+                            </div>
+                        </div>
+                        <div id="rps-container" class="well well--inset" style="margin-top:12px;"></div>
+                    </div>
+                </div>
+            </section>
+            <!-- Screen 4: Annoying Yes Button -->
+            <section id="question" class="screen screen--hidden" data-stage="question" aria-label="Question">
+                <div class="panel panel--extruded flex-col-center">
+                    <div class="scene-frame pixel-box">
+                        <img class="scene-img" src="assets/stage3-banner.jpg" alt="Question banner" />
+                    </div>
+                    <h2 class="title title--sm">Annoying Button</h2>
+                    <div class="dialogue-box pixel-box" style="width:100%;">
+                        <div class="dialogue-inner">
+                            <div class="avatar-wrapper">
+                                <img class="avatar-frame" src="assets/babar-sillyface.png" data-asset alt="Babar" />
+                            </div>
+                            <div class="dialogue-text">
+                                <h3 class="dialogue-name">Babar</h3>
+                                <p class="typewriter">Click the 'BON' button, but chase it when it runs away. Keep
+                                    trying!</p>
+                            </div>
+                        </div>
+                        <div id="question-container" class="well well--inset" style="margin-top:12px;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 5: Lotto Scratch Card -->
+            <section id="lotto" class="screen screen--hidden" data-stage="lotto" aria-label="Supermarket Last Quest">
+                <div class="panel panel--extruded flex-col-center">
+                    <div class="scene-frame pixel-box">
+                        <img class="scene-img" src="assets/ending.jpg" alt="Lotto banner" />
+                    </div>
+                    <h2 class="title title--sm">Supermarket Last Quest</h2>
+                    <div class="dialogue-box pixel-box" style="width:100%;">
+                        <div class="dialogue-inner">
+                            <div class="avatar-wrapper">
+                                <img class="avatar-frame" src="assets/babar-cheer.png" data-asset alt="Babar" />
+                            </div>
+                            <div class="dialogue-text">
+                                <h3 class="dialogue-name">Babar</h3>
+                                <p class="typewriter">Scratch the ticket to reveal your prize. Tap or drag to scratch.
+                                </p>
+                            </div>
+                        </div>
+                        <div id="lotto-container" class="well well--inset" style="margin-top:12px;"></div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="alert-root" aria-live="assertive"></div>
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/stage1.js"></script>
+    <script type="module" src="js/stage2.js"></script>
+    <script type="module" src="js/stage3.js"></script>
+    <script type="module" src="js/stage4.js"></script>
+    <script>
+        // Typewriter helper: types visible .typewriter text inside the provided root element
+        function typeIn(root, speed = 22) {
+            const els = root.querySelectorAll('.typewriter');
+            for (const el of els) {
+                if (el.dataset.typing === 'done') continue;
+                const full = el.textContent.trim();
+                el.dataset.full = full;
+                el.textContent = '';
+                el.dataset.typing = 'in-progress';
+                // clear element and create a text node + caret so cursor stays aligned
+                el.textContent = '';
+                const txt = document.createTextNode('');
+                const caret = document.createElement('span');
+                caret.className = 'caret';
+                el.appendChild(txt);
+                el.appendChild(caret);
+
+                let i = 0;
+                function step() {
+                    if (i <= full.length) {
+                        txt.data = full.slice(0, i);
+                        i += 1;
+                        setTimeout(step, speed);
+                    } else {
+                        el.dataset.typing = 'done';
+                        // remove caret after short pause
+                        setTimeout(() => caret.remove(), 900);
+                    }
+                }
+                step();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            typeIn(document.getElementById('welcome'));
+        });
+
+        // When the active stage changes, type that stage's dialogue.
+        document.addEventListener('stagechange', (e) => {
+            const id = e.detail.stageId;
+            const screen = document.querySelector(`[data-stage="${id}"]`);
+            if (screen) setTimeout(() => typeIn(screen), 150);
+        });
+    </script>
+</body>
+
+</html>
