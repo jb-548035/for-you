@@ -307,25 +307,6 @@ img {
     /* Prevent layout shift */
 }
 
-/* JS-driven typewriter: use inline caret element so cursor stays aligned */
-.typewriter {
-    display: inline-block;
-    white-space: pre-wrap;
-    word-break: break-word;
-    letter-spacing: .02em;
-    overflow-wrap: anywhere;
-    vertical-align: top;
-}
-
-.typewriter .caret {
-    display: inline-block;
-    width: 0;
-    border-right: .12em solid var(--kwek-orange);
-    margin-left: 4px;
-    animation: blink .8s step-end infinite;
-    vertical-align: bottom;
-}
-
 /* @keyframes typing {
     from {
         width: 0
@@ -638,33 +619,29 @@ img {
     filter: drop-shadow(4px 4px 0px rgba(163, 177, 198, 0.4));
 }
 
-.rps-babar.is-looping {
-    animation: orbit 5s ease-in-out both;
-    position: relative;
-    z-index: 5;
-}
-
+.rps-babar.is-looping,
 .rps-bon.is-looping {
-    animation: orbit 5s ease-in-out both;
+    animation: rps-hop var(--loop-ms, 1s) ease-in-out both;
     position: relative;
     z-index: 5;
 }
 
-@keyframes orbit {
+/* Loser moves upward, then returns to its original position */
+@keyframes rps-hop {
     0% {
-        transform: rotate(0deg) translateX(0) rotate(0deg);
+        transform: translateY(0);
     }
 
-    10% {
-        transform: rotate(72deg) translateX(46px) rotate(-72deg);
+    45% {
+        transform: translateY(-70px);
     }
 
-    90% {
-        transform: rotate(648deg) translateX(46px) rotate(-648deg);
+    55% {
+        transform: translateY(-70px);
     }
 
     100% {
-        transform: rotate(720deg) translateX(0) rotate(-720deg);
+        transform: translateY(0);
     }
 }
 
@@ -1004,8 +981,9 @@ img {
 }
 
 .scene-frame {
-    height: 100px;
-    /* Smaller for the maze screen to fit */
+    height: auto;
+    /* level6: full, un-cropped image */
+    flex-shrink: 0;
     width: 100%;
     background-size: cover;
     background-position: center;
@@ -1017,7 +995,6 @@ img {
 }
 
 .scene-frame:hover {
-    transform: translateY(-4px) scale(1.01);
     box-shadow: 0 18px 40px rgba(20, 30, 60, 0.08);
 }
 
@@ -1030,17 +1007,30 @@ img {
     pointer-events: none;
 }
 
-/* ensure typewriter displays nicely on multiple widths */
+/* Typewriter: full text is laid out up-front (remaining letters are invisible),
+   so wrapping never jumps mid-word. No CSS width/steps animation here. */
 .typewriter {
-    overflow: hidden;
-    border-right: .15em solid var(--accent);
-    /* Cursor */
-    white-space: pre-wrap;
-    /* Allows text to wrap */
+    display: block;
+    margin: 0;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
     letter-spacing: .02em;
-    animation:
-        typing 3.5s steps(50, end) forwards,
-        blink-caret .75s step-end infinite;
+    line-height: 1.6;
+}
+
+.typewriter .tw-rest {
+    visibility: hidden;
+}
+
+.typewriter .caret {
+    display: inline-block;
+    width: 0;
+    border-right: .12em solid var(--accent);
+    height: 1em;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink .8s step-end infinite;
 }
 
 .avatar-wrapper {
@@ -1066,7 +1056,7 @@ img {
     }
 
     .scene-frame {
-        height: 80px;
+        height: auto;
     }
 
     .avatar-wrapper {
@@ -1081,4 +1071,90 @@ img {
     .maze {
         --cell: clamp(16px, calc((100vw - 100px) / 11), 30px);
     }
+}
+
+/* ===== Stage 2 intro (duration set from stage2.js via --intro-ms) ===== */
+.rps-bon.is-entering {
+    animation: rps-enter-left var(--intro-ms, 1s) var(--ease) both;
+}
+
+.rps-babar.is-entering {
+    animation: rps-enter-right var(--intro-ms, 1s) var(--ease) both;
+}
+
+@keyframes rps-enter-left {
+    from {
+        opacity: 0;
+        transform: translateX(-140%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes rps-enter-right {
+    from {
+        opacity: 0;
+        transform: translateX(140%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ===== Green theme (overrides; keep at end of file) ===== */
+:root {
+    --accent: #2e9e4f;
+    --accent-glow: rgba(46, 158, 79, 0.25);
+    --ink: #1f6b38;
+    --ink-soft: #3f8a58;
+}
+
+.dialogue-text,
+.dialogue-name,
+.typewriter,
+#welcome-text,
+#maze-text,
+.rps-reveal,
+.rps-status,
+.rps-score,
+.question-note {
+    color: #1f7a3a;
+}
+
+.btn:hover,
+.btn--primary,
+.btn--large {
+    color: var(--accent);
+}
+
+.btn--primary {
+    border-color: rgba(46, 158, 79, 0.35);
+}
+
+.btn--large {
+    border-color: var(--accent);
+    box-shadow: 0 4px 0 rgba(46, 158, 79, 0.25);
+}
+
+.btn--large:hover {
+    background: #eefaf1;
+    box-shadow: 0 6px 0 rgba(46, 158, 79, 0.35);
+}
+
+.btn:active,
+.btn.is-pressed,
+.btn--large:active {
+    color: #fff;
+    background: var(--accent);
+}
+
+.btn:disabled,
+.btn:disabled:hover {
+    color: inherit;
+    background: var(--surface);
 }

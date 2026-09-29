@@ -52,6 +52,7 @@
                         <img class="scene-img" src="assets/stage1-banner.jpg" alt="Maze banner" />
                     </div>
 
+                    <h2 class="title title--sm" style="text-align: center;">ESCAPING MGA AW AW SA SANDAWA</h2>
                     <!-- Maze Container -->
                     <div id="maze-container" class="well well--inset maze-container"></div>
 
@@ -64,7 +65,7 @@
                             <div class="dialogue-text">
                                 <h3 class="dialogue-name">Babar</h3>
                                 <p id="maze-text" class="typewriter" aria-live="polite">
-                                    Run, Bon! The dog is chasing you — use arrow keys to move to the exit.
+                                    Dagan Bon! Use arrow key to move. Avoid the mad dogand reach the exit!
                                 </p>
                             </div>
                         </div>
@@ -81,11 +82,12 @@
                     <div class="dialogue-box pixel-box" style="width:100%;">
                         <div class="dialogue-inner">
                             <div class="avatar-wrapper">
-                                <img class="avatar-frame" src="assets/babar-cheer.png" data-asset alt="Babar" />
+                                <img class="avatar-frame" src="assets/babar-approve.png" data-asset alt="Babar" />
                             </div>
                             <div class="dialogue-text">
                                 <h3 class="dialogue-name">Babar</h3>
-                                <p class="typewriter">Choose rock, paper, or scissors. Beat the opponent to proceed.</p>
+                                <p class="typewriter">Since malabo pa man mangyari ang rock, paper, scissors challenge.
+                                    Diri nalang nato siya gawin. Most kwek-kwek makain, wins.</p>
                             </div>
                         </div>
                         <div id="rps-container" class="well well--inset" style="margin-top:12px;"></div>
@@ -102,12 +104,11 @@
                     <div class="dialogue-box pixel-box" style="width:100%;">
                         <div class="dialogue-inner">
                             <div class="avatar-wrapper">
-                                <img class="avatar-frame" src="assets/babar-sillyface.png" data-asset alt="Babar" />
+                                <img class="avatar-frame" src="assets/babar-approve.png" data-asset alt="Babar" />
                             </div>
                             <div class="dialogue-text">
                                 <h3 class="dialogue-name">Babar</h3>
-                                <p class="typewriter">Click the 'BON' button, but chase it when it runs away. Keep
-                                    trying!</p>
+                                <p class="typewriter">Select kinsa ang mas cute sa atoa duha. Clue: Ako</p>
                             </div>
                         </div>
                         <div id="question-container" class="well well--inset" style="margin-top:12px;"></div>
@@ -121,7 +122,7 @@
                     <div class="scene-frame pixel-box">
                         <img class="scene-img" src="assets/ending.jpg" alt="Lotto banner" />
                     </div>
-                    <h2 class="title title--sm">Supermarket Last Quest</h2>
+                    <!-- <h2 class="title title--sm">Supermarket Last Quest</h2>
                     <div class="dialogue-box pixel-box" style="width:100%;">
                         <div class="dialogue-inner">
                             <div class="avatar-wrapper">
@@ -134,7 +135,7 @@
                             </div>
                         </div>
                         <div id="lotto-container" class="well well--inset" style="margin-top:12px;"></div>
-                    </div>
+                    </div> -->
                 </div>
             </section>
 
@@ -148,37 +149,37 @@
     <script type="module" src="js/stage3.js"></script>
     <script type="module" src="js/stage4.js"></script>
     <script>
-        // Typewriter helper: types visible .typewriter text inside the provided root element
+        // Typewriter helper: the full text is rendered up-front with the not-yet-typed
+        // part invisible, so line wraps never move while typing. Time-based (rAF) for smoothness.
+        const typers = new WeakMap();
         function typeIn(root, speed = 22) {
-            const els = root.querySelectorAll('.typewriter');
-            for (const el of els) {
-                if (el.dataset.typing === 'done') continue;
-                const full = el.textContent.trim();
+            root.querySelectorAll('.typewriter').forEach(el => {
+                if (el.dataset.typing) return;               // already typing or done
+                const full = (el.dataset.full || el.textContent).replace(/\s+/g, ' ').trim();
                 el.dataset.full = full;
-                el.textContent = '';
                 el.dataset.typing = 'in-progress';
-                // clear element and create a text node + caret so cursor stays aligned
-                el.textContent = '';
-                const txt = document.createTextNode('');
+
+                const shown = document.createElement('span');
                 const caret = document.createElement('span');
                 caret.className = 'caret';
-                el.appendChild(txt);
-                el.appendChild(caret);
+                const rest = document.createElement('span');
+                rest.className = 'tw-rest';
+                rest.textContent = full;
+                el.replaceChildren(shown, caret, rest);
 
-                let i = 0;
-                function step() {
-                    if (i <= full.length) {
-                        txt.data = full.slice(0, i);
-                        i += 1;
-                        setTimeout(step, speed);
-                    } else {
-                        el.dataset.typing = 'done';
-                        // remove caret after short pause
-                        setTimeout(() => caret.remove(), 900);
-                    }
-                }
-                step();
-            }
+                const token = Symbol();
+                typers.set(el, token);
+                const t0 = performance.now();
+                (function frame(now) {
+                    if (typers.get(el) !== token) return;
+                    const n = Math.min(full.length, Math.floor((now - t0) / speed));
+                    shown.textContent = full.slice(0, n);
+                    rest.textContent = full.slice(n);
+                    if (n < full.length) return requestAnimationFrame(frame);
+                    el.dataset.typing = 'done';
+                    setTimeout(() => caret.remove(), 900);
+                })(t0);
+            });
         }
 
         document.addEventListener('DOMContentLoaded', () => {

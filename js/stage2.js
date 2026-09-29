@@ -1,12 +1,12 @@
-/* Stage 2: "Kwek-kwek Challenge" (best of 3 wins vs Babar) */
+/* Stage 2: "Kwek-kwek Challenge" (buttons locked during intro; always proceeds to next stage) */
 import { navigateToStage, showAlert, safely } from './app.js';
 import { el, art, spriteImg, sfx } from './shared.js';
 
 const STAGE_ID = 'rps';
 const NEXT_STAGE = 'stage3';
 const TOTAL_EGGS = 10;
-const LOOP_MS = 5000;
-const FINISH_DELAY_MS = 1500;
+const LOOP_MS = 2000;
+const INTRO_MS = 1000; // character entry animation duration
 
 const HANDS = { rock: '✊', paper: '✋', scissors: '✌️' };
 const BEATS = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
@@ -19,14 +19,13 @@ function mount() {
     if (!host || ctx) return;
 
     const bon = el('div', 'rps-actor');
-    // use available character images
-    const bonWrap = el('div', 'rps-bon');
+    const bonWrap = el('div', 'rps-bon is-entering');
     bonWrap.append(spriteImg('assets/bon-grin.png', 'Bon', () => art.pajamas('#8fb0f0'), 'rps-sprite'));
     bon.append(bonWrap, el('span', 'rps-name', 'Bon'));
 
     const babarSprite = spriteImg('assets/babar-grin.png', 'Babar', () => art.pajamas('#f0a8b8'), 'rps-sprite');
     const babar = el('div', 'rps-actor');
-    const babarWrap = el('div', 'rps-babar');
+    const babarWrap = el('div', 'rps-babar is-entering');
     babarWrap.append(babarSprite);
     babar.append(babarWrap, el('span', 'rps-name', 'Babar'));
 
@@ -51,18 +50,88 @@ function mount() {
         controls.append(b);
     });
 
+    // Single source of truth: CSS animation durations come from these constants
+    host.style.setProperty('--intro-ms', INTRO_MS + 'ms');
+    host.style.setProperty('--loop-ms', LOOP_MS + 'ms');
+
     host.replaceChildren(arena, reveal, scoreLabel, status, controls);
 
     const ac = new AbortController();
-    ctx = { host, eggs, stick, babarWrap, bonWrap, reveal, status, controls, scoreLabel, bon, playerScore: 0, babarScore: 0, remaining: TOTAL_EGGS, locked: false, timers: [], loopTimer: 0, ac };
+    ctx = {
+        host, eggs, stick, babarWrap, bonWrap, reveal, status, controls, scoreLabel, bon,
+        playerScore: 0, babarScore: 0, remaining: TOTAL_EGGS,
+        locked: true, // start locked during intro animation
+        timers: [], ac,
+        pending: 0,      // animations currently blocking input
+        finished: false, // game over: buttons stay locked
+    };
+
     controls.addEventListener('click', safely(onPick, { title: 'Kwek-kwek error' }), { signal: ac.signal });
+
+    // Buttons stay locked until BOTH entry animations have actually finished
+    // (animationend), with a fallback timer in case an animation never fires.
+    const intro = Promise.race([
+        Promise.all([animationEnd(bonWrap), animationEnd(babarWrap)]),
+        wait(INTRO_MS + 600),
+    ]).then(() => {
+        if (!ctx) return;
+        babarWrap.classList.remove('is-entering');
+        bonWrap.classList.remove('is-entering');
+    });
+    lockUntil(intro);
+}
+
+/* ---------- Animation-lock helpers ---------- */
+function wait(ms) {
+    return new Promise(res => { if (ctx) ctx.timers.push(setTimeout(res, ms)); });
+}
+
+function animationEnd(node) {
+    return new Promise(res => {
+        const onEnd = e => {
+            if (e.target !== node) return;
+            node.removeEventListener('animationend', onEnd);
+            res();
+        };
+        node.addEventListener('animationend', onEnd);
+    });
+}
+
+/* Lock the buttons until `promise` settles. Overlapping animations stack. */
+function lockUntil(promise) {
+    if (!ctx) return;
+    const c = ctx;
+    c.pending += 1;
+    lockButtons();
+    promise.then(() => {
+        if (ctx !== c) return;              // stage was left / restarted
+        c.pending -= 1;
+        if (c.pending === 0 && !c.finished) unlockButtons();
+    });
+}
+
+function lockButtons() {
+    if (!ctx) return;
+    ctx.locked = true;
+    ctx.controls.querySelectorAll('button').forEach(b => {
+        b.disabled = true;
+        b.setAttribute('aria-disabled', 'true');
+    });
+}
+
+function unlockButtons() {
+    if (!ctx) return;
+    ctx.locked = false;
+    ctx.controls.querySelectorAll('button').forEach(b => {
+        b.disabled = false;
+        b.removeAttribute('aria-disabled');
+    });
 }
 
 function unmount() {
     if (!ctx) return;
     ctx.ac.abort();
     ctx.timers.forEach(clearTimeout);
-    clearTimeout(ctx.loopTimer);
     ctx.host.replaceChildren();
     ctx = null;
 }
@@ -82,13 +151,11 @@ function onPick(e) {
         return;
     }
 
-    // Someone wins this round; remove one egg from the stick and assign to winner
     const winnerIsPlayer = (BEATS[player] === babar);
     const eggIndex = ctx.remaining - 1;
     const egg = ctx.eggs[eggIndex];
     if (egg) {
         egg.classList.add('is-eaten');
-        // mark who ate it for styling
         egg.classList.add(winnerIsPlayer ? 'is-eaten-player' : 'is-eaten-babar');
     }
     ctx.remaining -= 1;
@@ -102,62 +169,57 @@ function onPick(e) {
         sfx.lose();
         ctx.babarScore += 1;
         ctx.status.textContent = `Babar ate one! (${ctx.playerScore} - ${ctx.babarScore})`;
-        // animate Bon using same looping animation as Babar
-        try { bonLoop(); } catch (e) { /* ignore */ }
     }
     ctx.scoreLabel.textContent = `Score — Bon ${ctx.playerScore} : ${ctx.babarScore} Babar`;
 
-    // If no eggs remain, decide winner
+    // The loser hops up and back; buttons stay locked until that animation ends
+    const hopDone = hop(winnerIsPlayer ? ctx.babarWrap : ctx.bonWrap);
+
+    // No eggs left: wait for the last animation, then show the final result
     if (ctx.remaining <= 0) {
-        ctx.locked = true;
-        ctx.controls.querySelectorAll('button').forEach(b => b.disabled = true);
-        // decide
-        if (ctx.playerScore > ctx.babarScore) {
-            ctx.status.textContent = 'You ate the most kwek-kwek! Proceeding...';
-            ctx.timers.push(setTimeout(() => navigateToStage(NEXT_STAGE), FINISH_DELAY_MS));
-        } else if (ctx.playerScore < ctx.babarScore) {
-            showAlert({ title: 'Babar wins!', message: 'Babar ate more kwek-kwek. Try again.', actions: [{ label: 'Try again' }], onClose: () => { if (ctx) { unmount(); mount(); } } });
-        } else {
-            showAlert({ title: 'Tie!', message: 'It is a tie. Try again.', actions: [{ label: 'Try again' }], onClose: () => { if (ctx) { unmount(); mount(); } } });
-        }
-    } else {
-        // animate babar when player wins
-        if (winnerIsPlayer) babarLoop();
+        ctx.finished = true;
+        lockButtons();
+        hopDone.then(showResult);
     }
 }
-// removed onWin/onLose; scoring handled inline (most eggs eaten wins)
 
-/* Babar circles the screen for 5 seconds (2 full loops), then settles back */
-function babarLoop() {
-    const w = ctx.babarWrap;
-    clearTimeout(ctx.loopTimer);
-    w.classList.remove('is-looping');
-    void w.offsetWidth; // restart the animation if a second win lands mid-loop
-    w.classList.add('is-looping');
-    ctx.loopTimer = setTimeout(() => w.classList.remove('is-looping'), LOOP_MS);
+/* Loser animation: up, then back to origin. Resolves when the animation has ended. */
+function hop(node) {
+    const c = ctx;
+    node.classList.remove('is-looping');
+    void node.offsetWidth;                       // restart the animation
+    node.classList.add('is-looping');
+
+    const ended = Promise.race([
+        new Promise(res => {
+            const onEnd = e => {
+                if (e.target !== node) return;
+                node.removeEventListener('animationend', onEnd);
+                res();
+            };
+            node.addEventListener('animationend', onEnd);
+        }),
+        wait(LOOP_MS + 300),                     // fallback if animationend never fires
+    ]).then(() => { if (ctx === c) node.classList.remove('is-looping'); });
+
+    lockUntil(ended);
+    return ended;
 }
 
-function bonLoop() {
-    const w = ctx.bonWrap;
-    clearTimeout(ctx.loopTimer);
-    w.classList.remove('is-looping');
-    void w.offsetWidth;
-    w.classList.add('is-looping');
-    ctx.loopTimer = setTimeout(() => w.classList.remove('is-looping'), LOOP_MS);
+/* Final message: who won + score. Continues to the next stage when dismissed. */
+function showResult() {
+    if (!ctx) return;
+    const p = ctx.playerScore, b = ctx.babarScore;
+    const title = p > b ? 'Bon wins!' : p < b ? 'Babar wins!' : "It's a tie!";
+    ctx.status.textContent = `${title} Final score — Bon ${p} : ${b} Babar`;
+    showAlert({
+        title,
+        message: `Final score — Bon ${p} : ${b} Babar. The quest continues!`,
+        actions: [{ label: 'Next stage' }],
+        onClose: () => navigateToStage(NEXT_STAGE),
+    });
 }
 
 document.addEventListener('stagechange', safely(e => {
     e.detail.stageId === STAGE_ID ? mount() : unmount();
 }, { title: 'Could not load the challenge' }));
-
-// Bon runs around briefly when he loses
-function bonRun() {
-    if (!ctx || !ctx.bon) return;
-    const b = ctx.bon;
-    b.classList.remove('is-panicked');
-    void b.offsetWidth;
-    b.classList.add('is-panicked');
-    // remove after 1.2s
-    const t = setTimeout(() => b.classList.remove('is-panicked'), 1200);
-    ctx.timers.push(t);
-}
