@@ -1,188 +1,184 @@
-/* Stage 2: "Kwek-kwek Challenge" (best of 3 wins vs Babar) */
-import { navigateToStage, showAlert, safely } from './app.js';
-import { el, art, spriteImg, sfx } from './shared.js';
+/* Stage 4: "Supermarket Last Quest" (two-circle scratch-off, one chance) */
+import { safely } from './app.js';
+import { el, sfx } from './shared.js';
 
-const STAGE_ID = 'rps';
-const NEXT_STAGE = 'stage3';
-const TOTAL_EGGS = 10;
-const LOOP_MS = 5000;
-const FINISH_DELAY_MS = 1500;
-const INTRO_MS = 2200; // character entry animation duration
+const STAGE_ID = 'lotto';
+const SIZE = 160;          // circle size in css px (also sent to CSS as --node-size)
+const BRUSH = 28;          // scratch brush width in css px
+const DRAG_MIN = 6;        // px of travel while the button is held before a drag counts and the choice locks in
+const REVEAL_AT = 0.5;     // fraction of the coating that must be cleared
+const CHECK_MS = 90;
 
-const HANDS = { rock: '✊', paper: '✋', scissors: '✌️' };
-const BEATS = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
-const LABEL = { rock: 'Rock', paper: 'Paper', scissors: 'Scissors' };
+const OPTIONS = [
+    { id: 1, img: 'assets/gift-item1.png', label: 'FOOD & DRINK VOUCHER', color: '#e8b94a' },
+    { id: 2, img: 'assets/gift-item2.png', label: 'GREEN ITEM VOUCHER', color: '#5fb8a0' },
+];
+const CLAIM_TEXT = 'SHOW THIS TO BABAR TO CLAIM PRIZE NEXT KITA NINYO.';
+const SCREENSHOT_TEXT = 'Take a screenshot of this screen so your win is on record.';
 
 let ctx = null;
 
+/* ---------- Lifecycle ---------- */
 function mount() {
-    const host = document.getElementById('rps-container');
+    const host = document.getElementById('lotto-container');
     if (!host || ctx) return;
 
-    const bon = el('div', 'rps-actor');
-    const bonWrap = el('div', 'rps-bon is-entering');
-    bonWrap.append(spriteImg('assets/bon-grin.png', 'Bon', () => art.pajamas('#8fb0f0'), 'rps-sprite'));
-    bon.append(bonWrap, el('span', 'rps-name', 'Bon'));
-
-    const babarSprite = spriteImg('assets/babar-grin.png', 'Babar', () => art.pajamas('#f0a8b8'), 'rps-sprite');
-    const babar = el('div', 'rps-actor');
-    const babarWrap = el('div', 'rps-babar is-entering');
-    babarWrap.append(babarSprite);
-    babar.append(babarWrap, el('span', 'rps-name', 'Babar'));
-
-    const stick = el('div', 'stick');
-    stick.setAttribute('role', 'img');
-    stick.setAttribute('aria-label', `${TOTAL_EGGS} kwek-kwek on the stick`);
-    const eggs = Array.from({ length: TOTAL_EGGS }, () => { const n = el('div', 'stick__egg'); stick.appendChild(n); return n; });
-
-    const arena = el('div', 'rps-arena');
-    arena.append(bon, stick, babar);
-
-    const reveal = el('p', 'rps-reveal', 'Pick one to win a kwek-kwek!');
-    const status = el('p', 'rps-status');
-    const scoreLabel = el('p', 'rps-score', `Score — Bon 0 : 0 Babar`);
-    status.setAttribute('role', 'alert');
-
-    const controls = el('div', 'rps-controls');
-    Object.keys(HANDS).forEach(k => {
-        const b = el('button', 'btn rps-btn');
-        b.type = 'button'; b.dataset.hand = k;
-        b.append(el('span', 'rps-btn__icon', HANDS[k]), el('span', '', LABEL[k]));
-        controls.append(b);
-    });
-
-    host.replaceChildren(arena, reveal, scoreLabel, status, controls);
+    const hint = el('p', 'lotto-hint', 'Pick ONE circle. Hold your left mouse button and drag to scratch. You only get one chance.');
+    const ticket = el('div', 'lotto-ticket');
+    const result = el('div', 'lotto-result');
+    host.replaceChildren(hint, ticket, result);
 
     const ac = new AbortController();
-    ctx = {
-        host, eggs, stick, babarWrap, bonWrap, reveal, status, controls, scoreLabel, bon,
-        playerScore: 0, babarScore: 0, remaining: TOTAL_EGGS,
-        locked: true, // start locked during intro animation
-        timers: [], loopTimer: 0, ac,
-    };
+    ctx = { host, ticket, result, ac, nodes: [], active: null, chosen: null, done: false };
+    ctx.nodes = OPTIONS.map(opt => buildNode(opt, ticket));
 
-    controls.addEventListener('click', safely(onPick, { title: 'Kwek-kwek error' }), { signal: ac.signal });
-
-    // Lock buttons during character entry animation
-    lockButtons();
-    const introTimer = setTimeout(() => {
-        babarWrap.classList.remove('is-entering');
-        bonWrap.classList.remove('is-entering');
-        unlockButtons();
-    }, INTRO_MS);
-    ctx.timers.push(introTimer);
-}
-
-function lockButtons() {
-    if (!ctx) return;
-    ctx.locked = true;
-    ctx.controls.querySelectorAll('button').forEach(b => {
-        b.disabled = true;
-        b.setAttribute('aria-disabled', 'true');
-    });
-}
-
-function unlockButtons() {
-    if (!ctx) return;
-    ctx.locked = false;
-    ctx.controls.querySelectorAll('button').forEach(b => {
-        b.disabled = false;
-        b.removeAttribute('aria-disabled');
-    });
+    /* Window-level move/up so the stroke keeps working when the cursor leaves the circle */
+    const o = { signal: ac.signal, passive: false };
+    window.addEventListener('mousemove', safely(e => scratch(e.clientX, e.clientY, e), { title: 'Scratch error' }), o);
+    window.addEventListener('mouseup', e => { if (e.button === 0) endStroke(); }, { signal: ac.signal });
+    window.addEventListener('touchmove', safely(e => { const t = e.touches[0]; if (t) scratch(t.clientX, t.clientY, e); }, { title: 'Scratch error' }), o);
+    window.addEventListener('touchend', () => endStroke(), { signal: ac.signal });
+    window.addEventListener('touchcancel', () => endStroke(), { signal: ac.signal });
 }
 
 function unmount() {
     if (!ctx) return;
     ctx.ac.abort();
-    ctx.timers.forEach(clearTimeout);
-    clearTimeout(ctx.loopTimer);
     ctx.host.replaceChildren();
     ctx = null;
 }
 
-function onPick(e) {
-    const btn = e.target.closest('[data-hand]');
-    if (!btn || !ctx || ctx.locked) return;
+/* ---------- Scratch circles ---------- */
+function buildNode(opt, parent) {
+    const wrap = el('div', 'scratch-node');
+    wrap.style.setProperty('--node-size', SIZE + 'px');
+    wrap.setAttribute('aria-label', `Scratch option ${opt.id}`);
 
-    const player = btn.dataset.hand;
-    const keys = Object.keys(HANDS);
-    const babar = keys[Math.floor(Math.random() * keys.length)];
-    ctx.reveal.textContent = `Bon ${HANDS[player]}  vs  ${HANDS[babar]} Babar`;
+    /* Hidden layer: voucher graphic + label card text */
+    const under = el('div', 'scratch-under');
+    const img = document.createElement('img');
+    img.src = opt.img;
+    img.alt = opt.label;
+    img.draggable = false;
+    img.className = 'scratch-gift';
+    img.addEventListener('error', () => img.remove(), { once: true });   // missing art: label still shows
+    under.append(img, el('span', 'scratch-prize', opt.label));
 
-    if (player === babar) {
-        sfx.tie();
-        ctx.status.textContent = 'Tie! No one eats this round.';
-        return;
-    }
+    /* Mask layer */
+    const canvas = el('canvas', 'scratch-canvas');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = canvas.height = Math.round(SIZE * dpr);
+    canvas.style.width = canvas.style.height = SIZE + 'px';
+    const g = canvas.getContext('2d', { willReadFrequently: true });
+    g.scale(dpr, dpr);
+    g.fillStyle = opt.color;
+    g.beginPath(); g.arc(SIZE / 2, SIZE / 2, SIZE / 2, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.22)';
+    for (let i = 0; i < 110; i++) g.fillRect(Math.random() * SIZE, Math.random() * SIZE, 3, 3);
+    g.fillStyle = 'rgba(255,255,255,.85)';
+    g.font = '12px "Press Start 2P", monospace';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('SCRATCH', SIZE / 2, SIZE / 2);
 
-    const winnerIsPlayer = (BEATS[player] === babar);
-    const eggIndex = ctx.remaining - 1;
-    const egg = ctx.eggs[eggIndex];
-    if (egg) {
-        egg.classList.add('is-eaten');
-        egg.classList.add(winnerIsPlayer ? 'is-eaten-player' : 'is-eaten-babar');
-    }
-    ctx.remaining -= 1;
-    ctx.stick.setAttribute('aria-label', `${ctx.remaining} kwek-kwek left on the stick`);
+    const node = { opt, wrap, canvas, g, last: null, travel: 0, lastCheck: 0, opaque0: countOpaque(g, canvas) };
+    wrap.append(under, canvas);
+    parent.append(wrap);
 
-    if (winnerIsPlayer) {
-        sfx.win();
-        ctx.playerScore += 1;
-        ctx.status.textContent = `You ate one! (${ctx.playerScore} - ${ctx.babarScore})`;
-    } else {
-        sfx.lose();
-        ctx.babarScore += 1;
-        ctx.status.textContent = `Babar ate one! (${ctx.playerScore} - ${ctx.babarScore})`;
-        try { bonLoop(); } catch (e) { /* ignore */ }
-    }
-    ctx.scoreLabel.textContent = `Score — Bon ${ctx.playerScore} : ${ctx.babarScore} Babar`;
-
-    // If no eggs remain — ALWAYS proceed to next stage (Task 7 fix)
-    if (ctx.remaining <= 0) {
-        ctx.locked = true;
-        ctx.controls.querySelectorAll('button').forEach(b => b.disabled = true);
-
-        if (ctx.playerScore > ctx.babarScore) {
-            ctx.status.textContent = 'You ate the most kwek-kwek! Proceeding...';
-        } else if (ctx.playerScore < ctx.babarScore) {
-            ctx.status.textContent = 'Babar ate more, but the quest continues! Proceeding...';
-        } else {
-            ctx.status.textContent = 'Tie game! But the quest continues. Proceeding...';
-        }
-        ctx.timers.push(setTimeout(() => navigateToStage(NEXT_STAGE), FINISH_DELAY_MS));
-    } else {
-        if (winnerIsPlayer) babarLoop();
-    }
+    const press = safely((x, y, e) => {
+        if (ctx.done) return;
+        if (ctx.chosen && ctx.chosen !== node) return;               // the other circle is locked out
+        if (wrap.classList.contains('is-locked')) return;
+        e.preventDefault();
+        ctx.active = node;
+        node.last = toLocal(node, x, y);
+        node.travel = 0;                                             // a bare click is not a scratch; a drag is
+    });
+    canvas.addEventListener('mousedown', e => { if (e.button === 0) press(e.clientX, e.clientY, e); }, { signal: ctx.ac.signal });
+    canvas.addEventListener('touchstart', e => { const t = e.touches[0]; if (t) press(t.clientX, t.clientY, e); }, { signal: ctx.ac.signal, passive: false });
+    return node;
 }
 
-function babarLoop() {
-    const w = ctx.babarWrap;
-    clearTimeout(ctx.loopTimer);
-    w.classList.remove('is-looping');
-    void w.offsetWidth;
-    w.classList.add('is-looping');
-    ctx.loopTimer = setTimeout(() => w.classList.remove('is-looping'), LOOP_MS);
+const toLocal = (node, x, y) => {
+    const r = node.canvas.getBoundingClientRect();
+    return { x: ((x - r.left) / r.width) * SIZE, y: ((y - r.top) / r.height) * SIZE };
+};
+
+function dab(node, from, to) {
+    const g = node.g;
+    g.save();
+    g.globalCompositeOperation = 'destination-out';
+    g.lineCap = g.lineJoin = 'round';
+    g.lineWidth = BRUSH;
+    g.beginPath(); g.moveTo(from.x, from.y); g.lineTo(to.x, to.y); g.stroke();
+    g.restore();
 }
 
-function bonLoop() {
-    const w = ctx.bonWrap;
-    clearTimeout(ctx.loopTimer);
-    w.classList.remove('is-looping');
-    void w.offsetWidth;
-    w.classList.add('is-looping');
-    ctx.loopTimer = setTimeout(() => w.classList.remove('is-looping'), LOOP_MS);
+/* The first real drag on a circle locks that choice in and shuts the other one */
+function lockIn(node) {
+    ctx.chosen = node;
+    ctx.nodes.filter(n => n !== node).forEach(n => {
+        n.wrap.classList.add('is-locked');
+        n.wrap.setAttribute('aria-disabled', 'true');
+    });
+    node.wrap.classList.add('is-chosen');
+}
+
+function scratch(x, y, e) {
+    const node = ctx?.active;
+    if (!node || ctx.done) return;
+    e.preventDefault();
+    const p = toLocal(node, x, y);
+    node.travel += Math.hypot(p.x - node.last.x, p.y - node.last.y);
+
+    if (!ctx.chosen) {
+        if (node.travel < DRAG_MIN) return;                          // not a drag yet: keep the anchor point, don't scratch
+        lockIn(node);
+    }
+    dab(node, node.last, p);
+    node.last = p;
+
+    const now = performance.now();
+    if (now - node.lastCheck > CHECK_MS) { node.lastCheck = now; checkProgress(node); }
+}
+
+function endStroke() {
+    if (!ctx?.active) return;
+    const node = ctx.active;
+    ctx.active = null;
+    node.last = null;
+    if (ctx.chosen === node) checkProgress(node);
+}
+
+const countOpaque = (g, canvas) => {
+    const d = g.getImageData(0, 0, canvas.width, canvas.height).data;
+    let n = 0;
+    for (let i = 3; i < d.length; i += 16) if (d[i] > 128) n++;      // every 4th pixel is plenty
+    return n || 1;
+};
+
+function checkProgress(node) {
+    if (ctx.done) return;
+    const cleared = 1 - countOpaque(node.g, node.canvas) / node.opaque0;
+    if (cleared >= REVEAL_AT) claim(node);
+}
+
+/* ---------- Claim card (permanent) ---------- */
+function claim(node) {
+    ctx.done = true;
+    ctx.active = null;
+    sfx.reveal();
+    node.canvas.classList.add('is-revealed');                        // clears the rest of the coating
+
+    const card = el('div', 'lotto-claim');
+    card.setAttribute('role', 'status');
+    card.append(
+        el('p', 'lotto-claim__prize', `YOU WON: ${node.opt.label}`),
+        el('p', 'lotto-claim__text', CLAIM_TEXT),
+        el('p', 'lotto-claim__shot', SCREENSHOT_TEXT),
+    );
+    ctx.result.replaceChildren(card);
 }
 
 document.addEventListener('stagechange', safely(e => {
     e.detail.stageId === STAGE_ID ? mount() : unmount();
-}, { title: 'Could not load the challenge' }));
-
-function bonRun() {
-    if (!ctx || !ctx.bon) return;
-    const b = ctx.bon;
-    b.classList.remove('is-panicked');
-    void b.offsetWidth;
-    b.classList.add('is-panicked');
-    const t = setTimeout(() => b.classList.remove('is-panicked'), 1200);
-    ctx.timers.push(t);
-}
+}, { title: 'Could not load the lotto' }));

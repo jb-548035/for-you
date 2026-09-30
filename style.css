@@ -567,7 +567,7 @@ img {
     align-items: flex-end;
     justify-content: space-between;
     gap: 12px;
-    min-height: 240px;
+    min-height: 300px;
     padding: 10px 0;
 }
 
@@ -575,7 +575,12 @@ img {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
+    min-width: 110px;
+    position: relative;
+    /* Reserve vertical space for the sprite so the hop can travel up
+       without pushing the layout (sprite is absolutely positioned). */
+    padding-top: 180px;
 }
 
 .rps-actor.is-panicked {
@@ -610,21 +615,41 @@ img {
 
 .rps-name {
     font-family: var(--font-display);
-    font-size: .6rem;
+    font-size: .7rem;
+    color: var(--green, #1f7a3a);
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    margin-top: 6px;
+    line-height: 1;
 }
 
 .rps-sprite {
-    width: 80px;
-    height: 80px;
-    filter: drop-shadow(4px 4px 0px rgba(163, 177, 198, 0.4));
+    display: block;
+    width: 110px;
+    height: 110px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(4px 4px 0 rgba(163, 177, 198, 0.45));
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
-.rps-babar.is-looping,
-.rps-bon.is-looping {
-    /* Use the stage-provided --loop-ms (set to 2000ms by JS). Fallback to 2000ms and no delay. */
-    animation: rps-hop var(--loop-ms, 2000ms) ease-in-out both;
-    animation-delay: 0s;
-    position: relative;
+.rps-bon,
+.rps-babar {
+    position: absolute;
+    /* actor reserves 180px above the name plate; sprite is 110px tall, so its feet land exactly on the plate */
+    top: 70px;
+    left: calc(50% - 55px);
+    width: 110px;
+    height: 110px;
+    display: grid;
+    place-items: center;
+    will-change: transform;
+}
+
+.rps-bon.is-looping,
+.rps-babar.is-looping {
+    animation: rps-hop var(--loop-ms, 2000ms) cubic-bezier(.22, .9, .3, 1) both;
     z-index: 5;
 }
 
@@ -634,12 +659,24 @@ img {
         transform: translateY(0);
     }
 
-    45% {
-        transform: translateY(-70px);
+    30% {
+        transform: translateY(-120px);
+        /* peak — higher than before */
     }
 
-    55% {
-        transform: translateY(-70px);
+    50% {
+        transform: translateY(-120px);
+        /* brief hold */
+    }
+
+    75% {
+        transform: translateY(0);
+        /* fast return */
+    }
+
+    85% {
+        transform: translateY(-12px);
+        /* small overshoot bounce */
     }
 
     100% {
@@ -684,40 +721,181 @@ img {
     opacity: 0;
 }
 
-.rps-reveal {
-    margin-top: 12px;
-    min-height: 1.6em;
-    text-align: center;
-    font-size: 1.1rem;
-}
-
 .rps-status {
-    min-height: 1.8em;
+    min-height: 1.6em;
     text-align: center;
     font-family: var(--font-display);
     font-size: .7rem;
-    color: var(--accent);
+    color: var(--green, #1f7a3a);
+    margin-top: 6px;
+}
+
+.rps-vs {
+    min-height: 2.2rem;
+    /* reserved even when empty so nothing shifts on the first pick */
+    margin-top: 10px;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    line-height: 2.2rem;
+    letter-spacing: 2px;
+    color: #1f7a3a;
 }
 
 .rps-controls {
     display: flex;
-    gap: 12px;
+    gap: 14px;
     flex-wrap: wrap;
     justify-content: center;
-    margin-top: 8px;
+    margin-top: 12px;
+}
+
+.rps-btn__label {
+    line-height: 1;
+    letter-spacing: .3px;
 }
 
 .rps-btn {
+    /* Fixed dimensions so all three are perfectly equal */
+    width: 96px;
+    height: 96px;
+    padding: 8px 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     font-size: .6rem;
-    min-width: 96px;
+    font-family: var(--font-display);
+    flex: 0 0 auto;
+    box-sizing: border-box;
 }
 
 .rps-btn__icon {
     font-size: 1.8rem;
+    line-height: 1;
+}
+
+/* ---------- Winner popup (pixel-art trophy window) ---------- */
+.winner-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: grid;
+    place-items: center;
+    background: rgba(230, 238, 248, .55);
+    backdrop-filter: blur(2px);
+    animation: winner-fade-in .35s ease-out both;
+}
+
+@keyframes winner-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.winner-popup__window {
+    position: relative;
+    width: min(88vw, 320px);
+    background: #d9ecc6;
+    /* pale pixel-green */
+    border: 3px solid #2b3952;
+    box-shadow:
+        6px 6px 0 rgba(0, 0, 0, 0.25),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.5);
+    padding: 0 0 22px;
+    font-family: var(--font-display);
+    color: #2b3952;
+    animation: winner-pop .4s var(--ease) both;
+}
+
+@keyframes winner-pop {
+    0% {
+        transform: scale(.85);
+        opacity: 0;
+    }
+
+    60% {
+        transform: scale(1.04);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Window title bar */
+.winner-popup__bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 6px 8px;
+    border-bottom: 3px solid #2b3952;
+    background: #cfe3b8;
+}
+
+.winner-popup__ctrl {
+    display: inline-grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #2b3952;
+    background: #d9ecc6;
+    font-size: .55rem;
+    line-height: 1;
+    color: #2b3952;
+}
+
+.winner-popup__ctrl--close {
+    background: #e6a6a6;
+}
+
+/* Headline — "[NAME] WON" */
+.winner-popup__heading {
+    text-align: center;
+    font-size: clamp(1rem, 5vw, 1.35rem);
+    letter-spacing: 2px;
+    padding: 18px 12px 6px;
+    text-transform: uppercase;
+}
+
+/* Trophy area */
+.winner-popup__trophy {
+    display: grid;
+    place-items: center;
+    margin: 4px 0 6px;
+}
+
+/* OK button row */
+.winner-popup__actions {
+    display: flex;
+    justify-content: center;
+    padding: 14px 12px 0;
+}
+
+.winner-popup__ok {
+    min-width: 120px;
+}
+
+.winner-popup--leaving {
+    opacity: 0;
+    transition: opacity .3s ease;
+    pointer-events: none;
+}
+
+/* Subtitle — "THIS CHALLENGE." */
+.winner-popup__sub {
+    text-align: center;
+    font-size: clamp(.9rem, 4.4vw, 1.2rem);
+    letter-spacing: 2px;
+    padding: 6px 12px 4px;
+    text-transform: uppercase;
 }
 
 /* ---------- Stage 3: Annoying Yes Button ---------- */
@@ -785,9 +963,10 @@ img {
 }
 
 .scratch-node {
+    --node-size: 160px;
     position: relative;
-    width: 140px;
-    height: 140px;
+    width: var(--node-size);
+    height: var(--node-size);
     border-radius: 50%;
     display: grid;
     place-items: center;
@@ -796,12 +975,83 @@ img {
     transition: opacity .4s, filter .4s, transform var(--t-fast) var(--ease);
 }
 
+.scratch-under {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 18px 16px;
+    text-align: center;
+}
+
+.scratch-gift {
+    max-width: 62%;
+    max-height: 52%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
 .scratch-prize {
-    padding: 0 14px;
     text-align: center;
     font-family: var(--font-display);
-    font-size: .55rem;
+    font-size: .48rem;
+    line-height: 1.5;
+    color: #1f7a3a;
+}
+
+.scratch-node.is-chosen {
+    box-shadow: var(--shadow-inset), 0 0 0 3px rgba(46, 158, 79, .35);
+}
+
+.lotto-container {
+    width: 100%;
+}
+
+.lotto-hint {
+    text-align: center;
+    font-size: 1rem;
     line-height: 1.6;
+    max-width: 44ch;
+    margin: 0 auto 18px;
+    color: #1f7a3a;
+}
+
+.lotto-claim {
+    width: 100%;
+    padding: 18px 16px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(240, 248, 245, .98));
+    border: 4px solid var(--ink-soft);
+    border-radius: var(--radius-sm);
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, .1);
+    text-align: center;
+    animation: winner-pop .4s var(--ease) both;
+}
+
+.lotto-claim__prize {
+    font-family: var(--font-display);
+    font-size: .6rem;
+    line-height: 1.6;
+    color: var(--accent);
+    margin-bottom: 10px;
+}
+
+.lotto-claim__text {
+    font-family: var(--font-display);
+    font-size: .75rem;
+    line-height: 1.8;
+    color: #1f7a3a;
+}
+
+.lotto-claim__shot {
+    margin-top: 10px;
+    font-size: .95rem;
+    color: var(--ink-soft);
 }
 
 .scratch-canvas {
@@ -1121,11 +1371,20 @@ img {
 .typewriter,
 #welcome-text,
 #maze-text,
-.rps-reveal,
 .rps-status,
 .rps-score,
 .question-note {
     color: #1f7a3a;
+}
+
+.rps-score {
+    font-family: var(--font-display);
+    font-size: .62rem;
+    color: var(--green, #1f7a3a);
+    font-weight: 700;
+    line-height: 1;
+    min-height: 1em;
+    margin-top: 2px;
 }
 
 .btn:hover,
@@ -1159,4 +1418,386 @@ img {
 .btn:disabled:hover {
     color: inherit;
     background: var(--surface);
+}
+
+/* ---------- Stage 1: Key / Lock / Gate ---------- */
+
+/* ---------- Stage 1: Key / Lock / Gate ---------- */
+
+/* Gate tile: solid wooden crate look. No red X, no dashes. */
+.maze__tile--gate {
+    background-color: #8a5a2b;
+    background-image:
+        /* Wood plank horizontal lines */
+        linear-gradient(0deg, transparent 45%, #6e4420 45%, #6e4420 55%, transparent 55%),
+        linear-gradient(90deg, transparent 45%, #6e4420 45%, #6e4420 55%, transparent 55%),
+        /* Grain */
+        linear-gradient(45deg, #7a4e26 25%, transparent 25%, transparent 75%, #7a4e26 75%, #7a4e26);
+    background-size: 100% 100%, 100% 100%, 8px 8px;
+    background-position: 0 0, 0 0, 0 0;
+    border: 2px solid #4a2c10;
+    border-radius: 3px;
+    box-shadow:
+        inset 2px 2px 0 rgba(255, 255, 255, 0.15),
+        inset -3px -3px 0 rgba(0, 0, 0, 0.35),
+        0 2px 0 rgba(0, 0, 0, 0.25);
+    transition: background-color .45s ease, opacity .45s ease, transform .35s ease;
+}
+
+/* Gate open: becomes a clean floor tile matching the surrounding path */
+.maze__tile--gate.is-open {
+    background-color: #c2d6b4;
+    background-image: none;
+    border: 1px solid #5a7a4a;
+    border-radius: 0;
+    box-shadow: inset 0 0 0 1px rgba(90, 122, 74, .25);
+    animation: gate-open .5s ease-out;
+}
+
+@keyframes gate-open {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    40% {
+        transform: scale(1.08);
+        opacity: .8;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Key tile: plain floor (the sprite is what matters). No red X, no dashes. */
+.maze__tile--key {
+    background-color: #c2d6b4;
+    border: 1px solid #5a7a4a;
+    border-radius: 0;
+}
+
+/* Lock tile: plain floor (the lock sprite is what matters). */
+.maze__tile--lock {
+    background-color: #c2d6b4;
+    border: 1px solid #5a7a4a;
+    border-radius: 0;
+}
+
+.maze__tile--lock.is-unlocked {
+    background: rgba(46, 158, 79, 0.15);
+}
+
+/* Key / lock sprites: larger, centered, gently bobbing */
+.maze__sprite--key,
+.maze__sprite--lock,
+.maze__sprite--item {
+    z-index: 12;
+    animation: bob 1.6s steps(4) infinite;
+    filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.3));
+    transform-origin: center bottom;
+    transition: opacity .35s ease, transform .35s ease;
+    /* Sit fully on top of the tile, slightly smaller than the cell so the
+       tile border remains visible behind the sprite */
+    width: calc(var(--cell) * 0.85);
+    height: calc(var(--cell) * 0.85);
+    left: calc(var(--c) * var(--cell) + var(--cell) * 0.075);
+    top: calc(var(--r) * var(--cell) + var(--cell) * 0.075);
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+/* Key disappears when picked up */
+.maze__sprite--key.is-picked {
+    opacity: 0;
+    transform: scale(0.4) rotate(20deg);
+    pointer-events: none;
+}
+
+/* Lock fades and shrinks when opened */
+.maze__sprite--lock.is-unlocked {
+    opacity: 0;
+    transform: scale(0.5) rotate(-12deg);
+    pointer-events: none;
+}
+
+/* Bon gets a subtle glow after picking the key */
+.maze__sprite--bon.has-key {
+    filter: drop-shadow(0 0 6px rgba(245, 197, 24, 0.9));
+}
+
+/* Tile "pop" feedback when key collected / lock triggered */
+.maze__tile.is-pulse {
+    animation: tile-pulse .5s ease-out;
+}
+
+@keyframes tile-pulse {
+    0% {
+        box-shadow: inset 0 0 0 0 rgba(245, 197, 24, 0.7);
+    }
+
+    60% {
+        box-shadow: inset 0 0 0 8px rgba(245, 197, 24, 0.0);
+    }
+
+    100% {
+        box-shadow: inset 0 0 0 0 rgba(245, 197, 24, 0.0);
+    }
+}
+
+/* ---------- D-pad arrow images: fixed sizing ---------- */
+.dpad__btn img,
+.dpad__btn .dpad__icon {
+    display: block;
+    width: 60%;
+    height: 60%;
+    max-width: 48px;
+    max-height: 48px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+@media (max-width: 420px) {
+
+    .dpad__btn img,
+    .dpad__btn .dpad__icon {
+        width: 58%;
+        height: 58%;
+        max-width: 40px;
+        max-height: 40px;
+    }
+}
+
+/* Gate tile: solid wooden crate look. No red X, no dashes. */
+.maze__tile--gate {
+    background-color: #8a5a2b;
+    background-image:
+        /* Wood plank horizontal lines */
+        linear-gradient(0deg, transparent 45%, #6e4420 45%, #6e4420 55%, transparent 55%),
+        linear-gradient(90deg, transparent 45%, #6e4420 45%, #6e4420 55%, transparent 55%),
+        /* Grain */
+        linear-gradient(45deg, #7a4e26 25%, transparent 25%, transparent 75%, #7a4e26 75%, #7a4e26);
+    background-size: 100% 100%, 100% 100%, 8px 8px;
+    background-position: 0 0, 0 0, 0 0;
+    border: 2px solid #4a2c10;
+    border-radius: 3px;
+    box-shadow:
+        inset 2px 2px 0 rgba(255, 255, 255, 0.15),
+        inset -3px -3px 0 rgba(0, 0, 0, 0.35),
+        0 2px 0 rgba(0, 0, 0, 0.25);
+    transition: background-color .45s ease, opacity .45s ease, transform .35s ease;
+}
+
+@keyframes gate-open {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    40% {
+        transform: scale(1.06);
+        opacity: .85;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Gate open: becomes a clean floor tile matching the surrounding path */
+.maze__tile--gate.is-open {
+    background-color: #c2d6b4;
+    background-image: none;
+    border: 1px solid #5a7a4a;
+    border-radius: 0;
+    box-shadow: inset 0 0 0 1px rgba(90, 122, 74, .25);
+    animation: gate-open .5s ease-out;
+}
+
+@keyframes gate-open {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    40% {
+        transform: scale(1.08);
+        opacity: .8;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Lock tile: subtle highlighted tile, changes on unlock */
+.maze__tile--lock {
+    background: rgba(245, 197, 24, 0.18);
+    border: 2px dashed #b58900;
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 1px rgba(181, 137, 0, 0.35);
+    transition: background .45s ease, border-color .45s ease;
+}
+
+.maze__tile--lock.is-unlocked {
+    background: rgba(46, 158, 79, 0.15);
+    border-color: var(--accent);
+}
+
+/* Key tile: subtle mark; the key sprite sits on top */
+.maze__tile--key {
+    background: rgba(245, 197, 24, 0.12);
+    border: 2px dashed #b58900;
+    border-radius: 4px;
+}
+
+/* Key / lock sprites: bob gently and sit above tiles */
+.maze__sprite--key,
+.maze__sprite--lock,
+.maze__sprite--item {
+    z-index: 12;
+    animation: bob 1.6s steps(4) infinite;
+    filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.3));
+    transform-origin: center bottom;
+    transition: opacity .35s ease, transform .35s ease;
+    /* Sit fully on top of the tile, slightly smaller than the cell so the
+       tile border remains visible behind the sprite */
+    width: calc(var(--cell) * 0.85);
+    height: calc(var(--cell) * 0.85);
+    left: calc(var(--c) * var(--cell) + var(--cell) * 0.075);
+    top: calc(var(--r) * var(--cell) + var(--cell) * 0.075);
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+/* Key disappears when picked up */
+.maze__sprite--key.is-picked {
+    opacity: 0;
+    transform: scale(0.4) rotate(20deg);
+    pointer-events: none;
+}
+
+/* Lock fades and shrinks when opened */
+.maze__sprite--lock.is-unlocked {
+    opacity: 0;
+    transform: scale(0.5) rotate(-12deg);
+    pointer-events: none;
+}
+
+/* Bon gets a subtle glow after picking the key */
+.maze__sprite--bon.has-key {
+    filter: drop-shadow(0 0 6px rgba(245, 197, 24, 0.85));
+}
+
+/* Tile "pop" feedback when key collected / lock triggered */
+.maze__tile.is-pulse {
+    animation: tile-pulse .5s ease-out;
+}
+
+@keyframes tile-pulse {
+    0% {
+        box-shadow: inset 0 0 0 0 rgba(245, 197, 24, 0.6);
+    }
+
+    60% {
+        box-shadow: inset 0 0 0 6px rgba(245, 197, 24, 0.0);
+    }
+
+    100% {
+        box-shadow: inset 0 0 0 0 rgba(245, 197, 24, 0.0);
+    }
+}
+
+/* D-pad: sized hit areas while preserving original image sizes */
+.dpad {
+    --dpad-size: 72px;
+    display: grid;
+    grid-template-columns: var(--dpad-size) var(--dpad-size) var(--dpad-size);
+    grid-template-rows: var(--dpad-size) var(--dpad-size);
+    grid-template-areas:
+        ". up ."
+        "left down right";
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.dpad__btn {
+    /* keep existing button styles but ensure the image is centered & fully visible */
+    display: grid;
+    place-items: center;
+    padding: 0;
+    background: var(--surface);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-sm);
+    /* extruded neumorphic depth */
+    box-shadow: 4px 4px 8px rgba(163, 177, 198, 0.5), -4px -4px 8px rgba(255, 255, 255, 0.85);
+    transition: box-shadow var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+    touch-action: manipulation;
+}
+
+/* Place buttons into named grid areas so layout matches the reference image */
+.dpad__btn--up {
+    grid-area: up;
+}
+
+.dpad__btn--left {
+    grid-area: left;
+}
+
+.dpad__btn--down {
+    grid-area: down;
+}
+
+.dpad__btn--right {
+    grid-area: right;
+}
+
+.dpad__btn img,
+.dpad__btn .dpad__icon {
+    display: block;
+    width: 60%;
+    height: 60%;
+    max-width: 48px;
+    max-height: 48px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.dpad__btn:hover,
+.dpad__btn:focus-visible {
+    box-shadow: 6px 6px 12px rgba(163, 177, 198, 0.55), -6px -6px 12px rgba(255, 255, 255, 0.9), 0 0 8px rgba(46, 158, 79, 0.15);
+    transform: translateY(-3px);
+}
+
+.dpad__btn:focus-visible {
+    outline: 3px dashed var(--accent);
+    outline-offset: 6px;
+}
+
+.dpad__btn:active,
+.dpad__btn.is-pressed {
+    box-shadow: inset 3px 3px 7px rgba(163, 177, 198, 0.7), inset -3px -3px 7px rgba(255, 255, 255, 0.9);
+    transform: translateY(1px) scale(0.98);
+}
+
+@media (max-width: 420px) {
+
+    .dpad__btn img,
+    .dpad__btn .dpad__icon {
+        width: 58%;
+        height: 58%;
+        max-width: 40px;
+        max-height: 40px;
+    }
 }
